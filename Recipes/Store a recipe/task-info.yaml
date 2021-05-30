@@ -300,6 +300,121 @@ files:
         }
     }
   learner_created: false
+- name: src/recipes/controller/RecipeController.java
+  visible: true
+  text: |
+    package recipes.controller;
+
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.web.bind.annotation.*;
+    import org.springframework.web.server.ResponseStatusException;
+    import recipes.entity.Recipe;
+    import recipes.service.RecipeService;
+
+    import java.util.HashMap;
+    import java.util.Map;
+
+    @RestController
+    @RequestMapping("/api")
+    public class RecipeController {
+
+        @Autowired
+        RecipeService recipeService;
+
+        @GetMapping("/recipe/{id}")
+        public ResponseEntity<Recipe> getRecipe(@PathVariable int id) {
+            Recipe recipe = recipeService.getRecipe(id);
+            if (recipe == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(recipe, HttpStatus.OK);
+        }
+
+        @PostMapping("/recipe/new")
+        public ResponseEntity<Object> addNewRecipe(@RequestBody Recipe recipe) {
+            recipeService.saveRecipe(recipe);
+            Map<String, Integer> resp = new HashMap<>();
+            resp.put("id", recipe.getId());
+            return new ResponseEntity<>(resp, HttpStatus.OK);
+        }
+
+    }
+  learner_created: true
+- name: src/recipes/service/RecipeService.java
+  visible: true
+  text: |
+    package recipes.service;
+
+    import recipes.entity.Recipe;
+
+    public interface RecipeService {
+
+        public int saveRecipe(Recipe recipe);
+
+        public Recipe getRecipe(int id);
+
+    }
+  learner_created: true
+- name: src/recipes/entity/Recipe.java
+  visible: true
+  text: |
+    package recipes.entity;
+
+    import com.fasterxml.jackson.annotation.JsonIgnore;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public class Recipe {
+        @JsonIgnore
+        private int id;
+        private String name;
+        private String description;
+        private String[] ingredients;
+        private String[] directions;
+    }
+  learner_created: true
+- name: src/recipes/service/RecipeServiceImpl.java
+  visible: true
+  text: |
+    package recipes.service;
+
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.stereotype.Service;
+    import recipes.entity.Recipe;
+    import recipes.entity.RecipeLibrary;
+
+    import java.util.ArrayList;
+    import java.util.List;
+
+    @Service
+    public class RecipeServiceImpl implements RecipeService{
+
+        @Autowired
+        RecipeLibrary recipeLibrary;
+
+        @Override
+        public int saveRecipe(Recipe recipe) {
+            return recipeLibrary.addRecipe(recipe);
+        }
+
+        @Override
+        public Recipe getRecipe(int id) {
+            return recipeLibrary.getRecipe(id);
+        }
+    }
+  learner_created: true
+- name: src/recipes/dao/RecipeRepository.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/180/stages/919/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Sun, 30 May 2021 17:43:54 UTC
 record: -1

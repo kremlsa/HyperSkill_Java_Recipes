@@ -2,9 +2,15 @@ package recipes.service;
 
 import recipes.entity.Recipe;
 
+import java.util.List;
+
 public interface RecipeService {
 
-    public int saveRecipe(Recipe recipe);
+    public List<Recipe> getAllRecipes();
+
+    void deleteRecipe(int id);
+
+    public void saveRecipe(Recipe recipe);
 
     public Recipe getRecipe(int id);
 

@@ -8,6 +8,7 @@ import org.springframework.web.server.ResponseStatusException;
 import recipes.entity.Recipe;
 import recipes.service.RecipeService;
 
+import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,11 +29,21 @@ public class RecipeController {
     }
 
     @PostMapping("/recipe/new")
-    public ResponseEntity<Object> addNewRecipe(@RequestBody Recipe recipe) {
+    public ResponseEntity<Object> addNewRecipe(@Valid @RequestBody Recipe recipe) {
         recipeService.saveRecipe(recipe);
         Map<String, Integer> resp = new HashMap<>();
         resp.put("id", recipe.getId());
         return new ResponseEntity<>(resp, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/recipe/{id}")
+    public ResponseEntity<Object> deleteRecipe(@PathVariable int id) {
+        Recipe recipe = recipeService.getRecipe(id);
+        if (recipe == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        recipeService.deleteRecipe(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 }
