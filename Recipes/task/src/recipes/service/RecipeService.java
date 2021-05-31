@@ -14,4 +14,5 @@ public interface RecipeService {
 
     public Recipe getRecipe(int id);
 
+    List<Recipe> getAllByKeyValue(String key, String value);
 }

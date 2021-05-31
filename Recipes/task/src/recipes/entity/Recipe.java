@@ -8,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "recipes")
@@ -23,6 +24,13 @@ public class Recipe {
     @NotBlank
     @NotNull
     private String name;
+    @Column(name = "category")
+    @NotEmpty
+    @NotBlank
+    @NotNull
+    private String category;
+    @Column(name = "date")
+    private LocalDateTime date;
     @Column(name = "description")
     @NotEmpty
     @NotBlank
@@ -37,14 +45,28 @@ public class Recipe {
     @NotNull
     private String[] directions;
 
-    public Recipe(String name, String description, String[] ingredients, String[] directions) {
-        this.name = name;
-        this.description = description;
-        this.ingredients = ingredients;
-        this.directions = directions;
+    @PrePersist
+    public void onCreated() {
+        this.date = LocalDateTime.now();
     }
 
     public Recipe() {
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = date;
     }
 
     public int getId() {

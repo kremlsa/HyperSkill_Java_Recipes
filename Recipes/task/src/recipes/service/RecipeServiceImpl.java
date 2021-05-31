@@ -6,6 +6,7 @@ import recipes.dao.RecipeRepository;
 import recipes.entity.Recipe;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -22,6 +23,29 @@ public class RecipeServiceImpl implements RecipeService{
             recipe = rcp.get();
         }
         return recipe;
+    }
+
+    @Override
+    public List<Recipe> getAllByKeyValue(String key, String value) {
+        List<Recipe> recipes = null;
+        Optional<List<Recipe>> rcp;
+        switch (key.toLowerCase()) {
+            case "category":
+                rcp = recipeRepository
+                        .findAllByCategoryIgnoreCaseOrderByDateDesc(value);
+                if (rcp.isPresent()) {
+                    recipes = rcp.get();
+                }
+                break;
+            case "name":
+                rcp = recipeRepository
+                        .findAllByNameContainingIgnoreCaseOrderByDateDesc(value);
+                if (rcp.isPresent()) {
+                    recipes = rcp.get();
+                }
+                break;
+        }
+        return recipes;
     }
 
     @Override

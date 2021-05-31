@@ -9,8 +9,7 @@ import recipes.entity.Recipe;
 import recipes.service.RecipeService;
 
 import javax.validation.Valid;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -44,6 +43,38 @@ public class RecipeController {
         }
         recipeService.deleteRecipe(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/recipe/{id}")
+    public ResponseEntity<Object> updateRecipe(@Valid @RequestBody Recipe recipe,
+                                               @PathVariable int id) {
+        Recipe recipeCheck = recipeService.getRecipe(id);
+        if (recipeCheck == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        recipe.setId(id);
+        recipe.onCreated();
+        recipeService.saveRecipe(recipe);
+//        return new ResponseEntity<>(recipe, HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/recipe/search/")
+    public ResponseEntity<Object> searchRecipe(@RequestParam(required = false)
+                                                        Map<String,String> params) {
+        if (params.size() == 1) {
+            Map.Entry<String,String> entry = params.entrySet().iterator().next();
+            String key = entry.getKey();
+            if (!entry.getKey().equalsIgnoreCase("name") &&
+                    !entry.getKey().equalsIgnoreCase("category")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+            String value = entry.getValue().toLowerCase();
+            List<Recipe> recipes = recipeService.getAllByKeyValue(key, value);
+            return new ResponseEntity<>(Objects.requireNonNullElse(recipes, "[]"), HttpStatus.OK);
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
     }
 
 }
