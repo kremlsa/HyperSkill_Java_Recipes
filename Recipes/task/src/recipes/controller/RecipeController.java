@@ -9,6 +9,7 @@ import recipes.entity.Recipe;
 import recipes.service.RecipeService;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.*;
 
 @RestController
@@ -28,7 +29,9 @@ public class RecipeController {
     }
 
     @PostMapping("/recipe/new")
-    public ResponseEntity<Object> addNewRecipe(@Valid @RequestBody Recipe recipe) {
+    public ResponseEntity<Object> addNewRecipe(@Valid @RequestBody Recipe recipe,
+                                               @Autowired Principal principal) {
+        recipe.setAuthor(principal.getName());
         recipeService.saveRecipe(recipe);
         Map<String, Integer> resp = new HashMap<>();
         resp.put("id", recipe.getId());
@@ -36,10 +39,15 @@ public class RecipeController {
     }
 
     @DeleteMapping("/recipe/{id}")
-    public ResponseEntity<Object> deleteRecipe(@PathVariable int id) {
+    public ResponseEntity<Object> deleteRecipe(@PathVariable int id,
+                                               @Autowired Principal principal) {
         Recipe recipe = recipeService.getRecipe(id);
         if (recipe == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        if (!recipe.getAuthor().equalsIgnoreCase(principal.getName())) {
+            return new ResponseEntity<>("wrong user", HttpStatus.FORBIDDEN);
         }
         recipeService.deleteRecipe(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -47,15 +55,19 @@ public class RecipeController {
 
     @PutMapping("/recipe/{id}")
     public ResponseEntity<Object> updateRecipe(@Valid @RequestBody Recipe recipe,
-                                               @PathVariable int id) {
+                            @PathVariable int id, @Autowired Principal principal) {
         Recipe recipeCheck = recipeService.getRecipe(id);
         if (recipeCheck == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
+
+        if (!recipeCheck.getAuthor().equalsIgnoreCase(principal.getName())) {
+            return new ResponseEntity<>("wrong user", HttpStatus.FORBIDDEN);
+        }
         recipe.setId(id);
+        recipe.setAuthor(recipeCheck.getAuthor());
         recipe.onCreated();
         recipeService.saveRecipe(recipe);
-//        return new ResponseEntity<>(recipe, HttpStatus.NO_CONTENT);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

@@ -44,6 +44,9 @@ public class Recipe {
     @Size(min = 1)
     @NotNull
     private String[] directions;
+    @JsonIgnore
+    @Column(name = "author")
+    private String author;
 
     @PrePersist
     public void onCreated() {
@@ -107,5 +110,13 @@ public class Recipe {
 
     public void setDirections(String[] directions) {
         this.directions = directions;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
     }
 }

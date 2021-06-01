@@ -806,6 +806,339 @@ files:
         }
     }
   learner_created: false
+- name: src/recipes/dao/RecipeRepository.java
+  visible: true
+  text: |
+    package recipes.dao;
+
+    import org.springframework.data.jpa.repository.JpaRepository;
+    import recipes.entity.Recipe;
+
+    import java.util.List;
+    import java.util.Optional;
+
+    public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
+
+        Optional<List<Recipe>> findAllByCategoryIgnoreCaseOrderByDateDesc(String category);
+        Optional<List<Recipe>> findAllByNameContainingIgnoreCaseOrderByDateDesc(String name);
+    }
+  learner_created: true
+- name: src/recipes/controller/RecipeController.java
+  visible: true
+  text: |
+    package recipes.controller;
+
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.web.bind.annotation.*;
+    import org.springframework.web.server.ResponseStatusException;
+    import recipes.entity.Recipe;
+    import recipes.service.RecipeService;
+
+    import javax.validation.Valid;
+    import java.util.*;
+
+    @RestController
+    @RequestMapping("/api")
+    public class RecipeController {
+
+        @Autowired
+        RecipeService recipeService;
+
+        @GetMapping("/recipe/{id}")
+        public ResponseEntity<Recipe> getRecipe(@PathVariable int id) {
+            Recipe recipe = recipeService.getRecipe(id);
+            if (recipe == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(recipe, HttpStatus.OK);
+        }
+
+        @PostMapping("/recipe/new")
+        public ResponseEntity<Object> addNewRecipe(@Valid @RequestBody Recipe recipe) {
+            recipeService.saveRecipe(recipe);
+            Map<String, Integer> resp = new HashMap<>();
+            resp.put("id", recipe.getId());
+            return new ResponseEntity<>(resp, HttpStatus.OK);
+        }
+
+        @DeleteMapping("/recipe/{id}")
+        public ResponseEntity<Object> deleteRecipe(@PathVariable int id) {
+            Recipe recipe = recipeService.getRecipe(id);
+            if (recipe == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            }
+            recipeService.deleteRecipe(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+
+        @PutMapping("/recipe/{id}")
+        public ResponseEntity<Object> updateRecipe(@Valid @RequestBody Recipe recipe,
+                                                   @PathVariable int id) {
+            Recipe recipeCheck = recipeService.getRecipe(id);
+            if (recipeCheck == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            }
+            recipe.setId(id);
+            recipe.onCreated();
+            recipeService.saveRecipe(recipe);
+    //        return new ResponseEntity<>(recipe, HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+
+        @GetMapping("/recipe/search/")
+        public ResponseEntity<Object> searchRecipe(@RequestParam(required = false)
+                                                            Map<String,String> params) {
+            if (params.size() == 1) {
+                Map.Entry<String,String> entry = params.entrySet().iterator().next();
+                String key = entry.getKey();
+                if (!entry.getKey().equalsIgnoreCase("name") &&
+                        !entry.getKey().equalsIgnoreCase("category")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                }
+                String value = entry.getValue().toLowerCase();
+                List<Recipe> recipes = recipeService.getAllByKeyValue(key, value);
+                return new ResponseEntity<>(Objects.requireNonNullElse(recipes, "[]"), HttpStatus.OK);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
+
+    }
+  learner_created: true
+- name: src/recipes/service/RecipeService.java
+  visible: true
+  text: |
+    package recipes.service;
+
+    import recipes.entity.Recipe;
+
+    import java.util.List;
+
+    public interface RecipeService {
+
+        public List<Recipe> getAllRecipes();
+
+        void deleteRecipe(int id);
+
+        public void saveRecipe(Recipe recipe);
+
+        public Recipe getRecipe(int id);
+
+        List<Recipe> getAllByKeyValue(String key, String value);
+    }
+  learner_created: true
+- name: src/recipes/entity/Recipe.java
+  visible: true
+  text: |
+    package recipes.entity;
+
+    import com.fasterxml.jackson.annotation.JsonIgnore;
+
+
+    import javax.persistence.*;
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.NotEmpty;
+    import javax.validation.constraints.NotNull;
+    import javax.validation.constraints.Size;
+    import java.time.LocalDateTime;
+
+    @Entity
+    @Table(name = "recipes")
+    public class Recipe {
+
+        @JsonIgnore
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        @Column(name = "id")
+        private int id;
+        @Column(name = "name")
+        @NotEmpty
+        @NotBlank
+        @NotNull
+        private String name;
+        @Column(name = "category")
+        @NotEmpty
+        @NotBlank
+        @NotNull
+        private String category;
+        @Column(name = "date")
+        private LocalDateTime date;
+        @Column(name = "description")
+        @NotEmpty
+        @NotBlank
+        @NotNull
+        private String description;
+        @Column(name = "ingredients")
+        @Size(min = 1)
+        @NotNull
+        private String[] ingredients;
+        @Column(name = "directions")
+        @Size(min = 1)
+        @NotNull
+        private String[] directions;
+
+        @PrePersist
+        public void onCreated() {
+            this.date = LocalDateTime.now();
+        }
+
+        public Recipe() {
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
+        }
+
+        public LocalDateTime getDate() {
+            return date;
+        }
+
+        public void setDate(LocalDateTime date) {
+            this.date = date;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public String[] getIngredients() {
+            return ingredients;
+        }
+
+        public void setIngredients(String[] ingredients) {
+            this.ingredients = ingredients;
+        }
+
+        public String[] getDirections() {
+            return directions;
+        }
+
+        public void setDirections(String[] directions) {
+            this.directions = directions;
+        }
+    }
+  learner_created: true
+- name: src/recipes/service/RecipeServiceImpl.java
+  visible: true
+  text: |
+    package recipes.service;
+
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.stereotype.Service;
+    import recipes.dao.RecipeRepository;
+    import recipes.entity.Recipe;
+
+    import java.util.List;
+    import java.util.Locale;
+    import java.util.Optional;
+
+    @Service
+    public class RecipeServiceImpl implements RecipeService{
+
+        @Autowired
+        RecipeRepository recipeRepository;
+
+        @Override
+        public Recipe getRecipe(int id) {
+            Recipe recipe = null;
+            Optional<Recipe> rcp = recipeRepository.findById(id);
+            if (rcp.isPresent()) {
+                recipe = rcp.get();
+            }
+            return recipe;
+        }
+
+        @Override
+        public List<Recipe> getAllByKeyValue(String key, String value) {
+            List<Recipe> recipes = null;
+            Optional<List<Recipe>> rcp;
+            switch (key.toLowerCase()) {
+                case "category":
+                    rcp = recipeRepository
+                            .findAllByCategoryIgnoreCaseOrderByDateDesc(value);
+                    if (rcp.isPresent()) {
+                        recipes = rcp.get();
+                    }
+                    break;
+                case "name":
+                    rcp = recipeRepository
+                            .findAllByNameContainingIgnoreCaseOrderByDateDesc(value);
+                    if (rcp.isPresent()) {
+                        recipes = rcp.get();
+                    }
+                    break;
+            }
+            return recipes;
+        }
+
+        @Override
+        public void deleteRecipe(int id) {
+            recipeRepository.deleteById(id);
+        }
+
+        @Override
+        public void saveRecipe(Recipe recipe) {
+            recipeRepository.save(recipe);
+        }
+
+        @Override
+        public List<Recipe> getAllRecipes() {
+            return recipeRepository.findAll();
+        }
+
+
+    }
+  learner_created: true
+- name: src/recipes/entity/User.java
+  visible: true
+  learner_created: true
+- name: src/recipes/dao/UserRepository.java
+  visible: true
+  learner_created: true
+- name: src/recipes/service/UserServiceImpl.java
+  visible: true
+  learner_created: true
+- name: src/recipes/cfg/BCryptEncoderConfig.java
+  visible: true
+  learner_created: true
+- name: src/recipes/cfg/WebSecurityConfig.java
+  visible: true
+  learner_created: true
+- name: src/recipes/controller/UserController.java
+  visible: true
+  learner_created: true
+- name: src/recipes/exception_handling/EmailException.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/180/stages/921/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Tue, 01 Jun 2021 05:44:12 UTC
 record: -1
